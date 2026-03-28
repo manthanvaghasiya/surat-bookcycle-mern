@@ -1,6 +1,7 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Book = require('../models/Book');
+const Order = require('../models/Order');
 
 // Generate JWT Token (Helper function)
 const generateToken = (id) => {
@@ -107,9 +108,53 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
+// @desc    Admin: Get App Stats
+// @route   GET /api/users/admin/stats
+const getAdminStats = async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalActiveBooks = await Book.countDocuments({ status: 'available' });
+        const totalCompletedOrders = await Order.countDocuments({ status: 'Completed' });
+        res.json({ totalUsers, totalActiveBooks, totalCompletedOrders });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching stats' });
+    }
+};
+
+// @desc    Admin: Get all users
+// @route   GET /api/users
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching users' });
+    }
+};
+
+// @desc    Admin: Toggle user ban
+// @route   PUT /api/users/:id/ban
+const toggleBanUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            user.isBanned = !user.isBanned;
+            await user.save();
+            res.json({ message: `User ${user.isBanned ? 'banned' : 'unbanned'}`, isBanned: user.isBanned });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating user' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
     updateUserProfile,
+    getAdminStats,
+    getUsers,
+    toggleBanUser,
 };

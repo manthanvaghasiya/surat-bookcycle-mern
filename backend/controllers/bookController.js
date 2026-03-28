@@ -68,21 +68,24 @@ const createBook = async (req, res) => {
 // @desc    Delete a book
 // @route   DELETE /api/books/:id
 const deleteBook = async (req, res) => {
-    const book = await Book.findById(req.params.id);
+    try {
+        const book = await Book.findById(req.params.id);
 
-    if (book) {
-        // Check if the user owns this book (Security)
+        if (!book) {
+            return res.status(404).json({ message: 'Book not found' });
+        }
+
+        // Crucial Logic: Authorization check (Owner OR Admin allowed)
         if (book.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
             return res.status(401).json({ message: 'Not authorized to delete this book' });
         }
 
-        // 1. Check book status (Don't delete if sold/reserved)
-        if (book.status !== 'available') {
+        // Allow Admins to delete even reserved/sold books, but block normal users
+        if (book.status !== 'available' && !req.user.isAdmin) {
              return res.status(400).json({ message: 'Cannot delete a book that is reserved or sold' });
         }
 
-        // 2. Delete the physical image file (Cleanup)
-        // We use 'path.resolve' to ensure we find the correct file on the system
+        // Delete the physical image file
         if (book.image) {
             const imagePath = path.resolve(book.image);
             if (fs.existsSync(imagePath)) {
@@ -90,11 +93,11 @@ const deleteBook = async (req, res) => {
             }
         }
 
-        // 3. Delete from Database
-        await book.deleteOne();
-        res.json({ message: 'Book removed' });
-    } else {
-        res.status(404).json({ message: 'Book not found' });
+        // Crucial Logic: Proceed to deletion
+        await Book.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Book removed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during deletion' });
     }
 };
 

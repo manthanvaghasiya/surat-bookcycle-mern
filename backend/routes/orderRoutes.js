@@ -8,6 +8,8 @@ const {
     mutualConfirm,
     cancelOrder,
     getAllOrders,
+    adminOverrideOrder,
+    exportOrdersCSV,
 } = require('../controllers/orderController');
 
 // FIX IS HERE: We added 'admin' to the import
@@ -23,5 +25,9 @@ router.get('/', protect, admin, getAllOrders);
 router.put('/:id/decision', protect, sellerDecision);
 router.put('/:id/mutual-confirm', protect, mutualConfirm);
 router.put('/:id/cancel', protect, cancelOrder);
+
+// Admin Action Routes
+router.get('/export/csv', protect, admin, exportOrdersCSV);
+router.put('/:id/admin-override', protect, admin, adminOverrideOrder);
 
 module.exports = router;

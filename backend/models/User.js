@@ -32,6 +32,10 @@ const userSchema = mongoose.Schema({
     campusOrArea: {
         type: String,
         required: false,
+    },
+    isBanned: {
+        type: Boolean,
+        default: false,
     }
 }, {
     timestamps: true // Automatically creates 'created_at' and 'updated_at'

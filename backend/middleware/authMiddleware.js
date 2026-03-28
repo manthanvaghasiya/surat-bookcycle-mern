@@ -17,6 +17,10 @@ const protect = async (req, res, next) => {
             // excluding the password
             req.user = await User.findById(decoded.id).select('-password');
 
+            if (req.user && req.user.isBanned) {
+                return res.status(403).json({ message: 'Your account has been suspended' });
+            }
+
             next(); // Move to the actual controller
         } catch (error) {
             console.error(error);

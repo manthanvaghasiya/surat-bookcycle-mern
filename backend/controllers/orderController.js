@@ -223,6 +223,65 @@ const getAllOrders = async (req, res) => {
     }
 };
 
+// @desc    Admin: Override order status
+// @route   PUT /api/orders/:id/admin-override
+const adminOverrideOrder = async (req, res) => {
+    try {
+        const { decision } = req.body; // 'Completed' or 'Cancelled'
+        const order = await Order.findById(req.params.id);
+        if (order) {
+            if (decision === 'Completed') {
+                order.status = 'Completed';
+            } else if (decision === 'Cancelled') {
+                order.status = 'Cancelled';
+                const book = await Book.findById(order.book);
+                if (book) { book.status = 'available'; await book.save(); }
+            } else {
+                return res.status(400).json({ message: 'Invalid decision' });
+            }
+            await order.save();
+            res.json(order);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Override failed' });
+    }
+};
+
+// @desc    Admin: Export orders as CSV
+// @route   GET /api/orders/export/csv
+const exportOrdersCSV = async (req, res) => {
+    try {
+        const orders = await Order.find({})
+            .populate('buyer', 'full_name email')
+            .populate('seller', 'full_name email')
+            .sort({ createdAt: -1 });
+        
+        let csv = 'Order ID,Book Title,Price,Status,Buyer Name,Buyer Email,Seller Name,Seller Email,Date\n';
+        orders.forEach(order => {
+            const bName = order.buyer?.full_name || 'N/A';
+            const bEmail = order.buyer?.email || 'N/A';
+            const sName = order.seller?.full_name || 'N/A';
+            const sEmail = order.seller?.email || 'N/A';
+            const date = new Date(order.createdAt).toISOString().split('T')[0];
+            
+            // Clean strings for CSV
+            const safeBName = bName.replace(/"/g, '""');
+            const safeSName = sName.replace(/"/g, '""');
+            const safeTitle = order.bookTitle.replace(/"/g, '""');
+
+            csv += `"${order._id}","${safeTitle}",${order.totalPrice},"${order.status}","${safeBName}","${bEmail}","${safeSName}","${sEmail}","${date}"\n`;
+        });
+
+        res.header('Content-Type', 'text/csv');
+        res.header('Content-Disposition', 'attachment; filename="orders.csv"');
+        return res.send(csv);
+    } catch (error) {
+        res.status(500).json({ message: 'Export failed' });
+    }
+};
+
 module.exports = {
     addOrder,
     getMyOrders,
@@ -231,4 +290,6 @@ module.exports = {
     mutualConfirm,
     cancelOrder,
     getAllOrders,
+    adminOverrideOrder,
+    exportOrdersCSV,
 };

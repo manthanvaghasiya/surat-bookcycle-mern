@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer'; 
+import AnnouncementBanner from './components/AnnouncementBanner'; // NEW
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -23,6 +24,7 @@ import NotFound from './pages/NotFound';
 function App() {
   return (
     <div style={appLayoutStyle}> {/* Wrapper for Flex Layout */}
+      <AnnouncementBanner />
       <Header />
      
       <div className="container" style={{ flex: 1 }}> {/* Main Content Grows */}

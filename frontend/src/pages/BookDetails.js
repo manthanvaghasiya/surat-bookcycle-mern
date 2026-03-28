@@ -51,6 +51,19 @@ const BookDetails = () => {
     }
   };
 
+  // Handle Report Button Click
+  const handleReport = async () => {
+      const reason = window.prompt("Why are you reporting this book? (e.g. Inappropriate content, spam)");
+      if (!reason) return;
+      try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          await axios.post('http://localhost:5000/api/reports', { book: book._id, reason }, config);
+          toast.success("Report submitted to Admins successfully.");
+      } catch (error) {
+          toast.error("Failed to submit report. Please try again.");
+      }
+  };
+
   if (loading) return <h3>Loading...</h3>;
 
   return (
@@ -91,6 +104,13 @@ const BookDetails = () => {
             ) : (
                 <button onClick={handleBuy} className="btn btn-success btn-block">
                     Buy Now
+                </button>
+            )}
+
+            {/* NEW REPORT BUTTON */}
+            {user && user._id !== book.user?._id && (
+                <button onClick={handleReport} className="btn btn-outline-danger btn-block" style={{marginTop: '10px'}}>
+                    Flag / Report Listing
                 </button>
             )}
         </div>
