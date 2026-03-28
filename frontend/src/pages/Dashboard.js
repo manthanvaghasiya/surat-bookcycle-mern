@@ -89,6 +89,25 @@ const Dashboard = () => {
     }
   };
 
+  const handleCancelOrder = async (id) => {
+    if (window.confirm('Are you sure you want to cancel this order? The book will become available in the marketplace again.')) {
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.put(`http://localhost:5000/api/orders/${id}/cancel`, {}, config);
+        
+        // Remove the cancelled order from the UI
+        setIncomingOrders(incomingOrders.filter(o => o._id !== id));
+        toast.success('Order Cancelled. Book is available again.');
+        
+        // Refresh the inventory grid so the book shows as 'available'
+        const booksRes = await axios.get('http://localhost:5000/api/books/mybooks', config);
+        setBooks(booksRes.data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error cancelling order');
+      }
+    }
+  };
+
   if (loading) return <div style={{textAlign: 'center', marginTop: '50px'}}>Loading your dashboard...</div>;
 
   return (
@@ -183,14 +202,25 @@ const Dashboard = () => {
                                </>
                             )}
                             {order.status === 'Accepted' && (
-                                <button 
-                                    onClick={() => handleMutualConfirm(order._id)} 
-                                    className="btn btn-primary" 
-                                    style={{flex: 1}}
-                                    disabled={order.sellerConfirmed}
-                                >
-                                    {order.sellerConfirmed ? 'Waiting for buyer to confirm...' : 'I gave this book'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                                    <button 
+                                        onClick={() => handleMutualConfirm(order._id)} 
+                                        className="btn btn-primary" 
+                                        style={{flex: 2}}
+                                        disabled={order.sellerConfirmed}
+                                    >
+                                        {order.sellerConfirmed ? 'Waiting for buyer...' : 'I gave this book'}
+                                    </button>
+                                    
+                                    {/* The New Cancel Button */}
+                                    <button 
+                                        onClick={() => handleCancelOrder(order._id)} 
+                                        className="btn btn-outline-danger" 
+                                        style={{flex: 1}}
+                                    >
+                                        Cancel Order
+                                    </button>
+                                </div>
                             )}
                          </div>
                       </div>
