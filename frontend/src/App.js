@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import ListBook from './pages/ListBook';
 import Home from './pages/Home';
 import BookDetails from './pages/BookDetails';
+import Profile from './pages/Profile'; // NEW
 import MyOrders from './pages/MyOrders';
 import AdminDashboard from './pages/AdminDashboard';
 import EditBook from './pages/EditBook';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/list-book" element={<ListBook />} />
           <Route path="/edit-book/:id" element={<EditBook />} />
           <Route path="/myorders" element={<MyOrders />} />

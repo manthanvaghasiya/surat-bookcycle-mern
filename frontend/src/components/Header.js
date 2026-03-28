@@ -39,7 +39,7 @@ const Header = () => {
 
                 <li style={profileContainerStyle}>
                     <FaUserCircle style={{fontSize: '1.2rem', color: '#007bff'}} />
-                    <span style={{fontWeight: '600'}}>{user.full_name.split(' ')[0]}</span>
+                    <Link to="/profile" style={{fontWeight: '600', textDecoration: 'none', color: '#333'}}>{user.full_name.split(' ')[0]}</Link>
                     <button onClick={onLogout} style={logoutBtnStyle} title="Logout">
                         <FaSignOutAlt />
                     </button>

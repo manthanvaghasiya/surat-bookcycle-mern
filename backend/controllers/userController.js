@@ -80,8 +80,36 @@ const getMe = async (req, res) => {
     res.status(200).json(req.user);
 };
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+const updateUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.phone = req.body.phone || user.phone;
+        user.address = req.body.address || user.address;
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            full_name: updatedUser.full_name,
+            email: updatedUser.email,
+            phone: updatedUser.phone,
+            address: updatedUser.address,
+            isAdmin: updatedUser.isAdmin,
+            trustScore: updatedUser.trustScore,
+            campusOrArea: updatedUser.campusOrArea,
+            token: generateToken(updatedUser._id),
+        });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
+    updateUserProfile,
 };

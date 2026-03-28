@@ -65,7 +65,12 @@ const Dashboard = () => {
         setBooks(booksRes.data);
       }
     } catch (error) {
-       toast.error(error.response?.data?.message || `Failed to ${decision} order`);
+       if (error.response?.status === 400 && error.response?.data?.message?.includes('update your phone number')) {
+           toast.warning(error.response.data.message);
+           navigate('/profile');
+       } else {
+           toast.error(error.response?.data?.message || `Failed to ${decision} order`);
+       }
     }
   };
 

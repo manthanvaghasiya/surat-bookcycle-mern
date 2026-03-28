@@ -42,7 +42,12 @@ const BookDetails = () => {
       toast.success('Order requested! Awaiting seller approval.');
       navigate('/myorders'); // Redirect to orders page
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Purchase failed');
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('update your phone number')) {
+          toast.warning(error.response.data.message);
+          navigate('/profile');
+      } else {
+          toast.error(error.response?.data?.message || 'Purchase failed');
+      }
     }
   };
 

@@ -5,6 +5,11 @@ const User = require('../models/User');
 // @desc    Create new order (Buy a book)
 // @route   POST /api/orders
 const addOrder = async (req, res) => {
+    // ENFORCEMENT: Ensure user has phone and address
+    if (!req.user.phone || !req.user.address) {
+        return res.status(400).json({ message: "Please update your phone number and address in your profile before buying." });
+    }
+
     const { bookId } = req.body;
 
     // 1. Find the book and ensure it is available
@@ -110,6 +115,10 @@ const sellerDecision = async (req, res) => {
         }
 
         if (decision === 'Accepted') {
+            // ENFORCEMENT for Seller
+            if (!req.user.phone || !req.user.address) {
+                return res.status(400).json({ message: "Please update your phone number and address in your profile before accepting orders." });
+            }
             order.status = 'Accepted';
         } else if (decision === 'Rejected') {
             order.status = 'Rejected';
