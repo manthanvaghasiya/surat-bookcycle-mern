@@ -4,8 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Components
 import Header from './components/Header';
-import Footer from './components/Footer'; // <-- Import Footer
-
+import Footer from './components/Footer'; 
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -17,14 +16,14 @@ import MyOrders from './pages/MyOrders';
 import AdminDashboard from './pages/AdminDashboard';
 import EditBook from './pages/EditBook';
 import Contact from './pages/Contact'; 
-import ScrollToTop from './components/ScrollToTop';
+
 import NotFound from './pages/NotFound';
 
 function App() {
   return (
     <div style={appLayoutStyle}> {/* Wrapper for Flex Layout */}
       <Header />
-      <ScrollToTop />
+     
       <div className="container" style={{ flex: 1 }}> {/* Main Content Grows */}
         <Routes>
           <Route path="/" element={<Home />} />

@@ -7,15 +7,16 @@ import { FaSearch, FaBook, FaComments, FaHandshake } from 'react-icons/fa';
 const Home = () => {
   const [books, setBooks] = useState([]);
   const [keyword, setKeyword] = useState('');
+  const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Fetch books
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const url = keyword 
-            ? `http://localhost:5000/api/books?keyword=${keyword}` 
-            : 'http://localhost:5000/api/books';
+        let url = 'http://localhost:5000/api/books?';
+        if (keyword) url += `keyword=${keyword}&`;
+        if (location) url += `location=${location}`;
             
         const { data } = await axios.get(url);
         setBooks(data);
@@ -26,7 +27,7 @@ const Home = () => {
       }
     };
     fetchBooks();
-  }, [keyword]);
+  }, [keyword, location]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -60,6 +61,19 @@ const Home = () => {
                 onChange={(e) => setKeyword(e.target.value)}
                 style={searchInputStyle}
             />
+            <select 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)}
+                style={locationSelectStyle}
+            >
+                <option value="">All Areas/Campuses</option>
+                <option value="SDJ International">SDJ International</option>
+                <option value="VNSGU">VNSGU</option>
+                <option value="SVNIT">SVNIT</option>
+                <option value="Vesu">Vesu</option>
+                <option value="Adajan">Adajan</option>
+                <option value="Piplod">Piplod</option>
+            </select>
             <button type="submit" style={searchButtonStyle}>Search</button>
         </form>
       </div>
@@ -187,6 +201,17 @@ const searchInputStyle = {
   fontSize: '1.1rem',
   width: '100%',
   color: '#333'
+};
+
+const locationSelectStyle = {
+    marginLeft: '15px',
+    padding: '10px 15px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    fontSize: '1rem',
+    outline: 'none',
+    backgroundColor: '#f9f9f9',
+    color: '#333'
 };
 
 const searchButtonStyle = {

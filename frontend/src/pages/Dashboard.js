@@ -16,24 +16,28 @@ const Dashboard = () => {
   const activeBooks = books.filter(b => b.status === 'available').length;
   const soldBooks = books.filter(b => b.status === 'sold').length;
 
+  const [incomingOrders, setIncomingOrders] = useState([]);
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
     } else {
-      const fetchMyBooks = async () => {
+      const fetchData = async () => {
         try {
-          const config = {
-            headers: { Authorization: `Bearer ${user.token}` },
-          };
-          const { data } = await axios.get('http://localhost:5000/api/books/mybooks', config);
-          setBooks(data);
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const [booksRes, ordersRes] = await Promise.all([
+             axios.get('http://localhost:5000/api/books/mybooks', config),
+             axios.get('http://localhost:5000/api/orders/incoming', config)
+          ]);
+          setBooks(booksRes.data);
+          setIncomingOrders(ordersRes.data);
           setLoading(false);
         } catch (error) {
-          toast.error('Could not fetch books');
+          toast.error('Could not fetch data');
           setLoading(false);
         }
       };
-      fetchMyBooks();
+      fetchData();
     }
   }, [user, navigate]);
 
@@ -50,6 +54,36 @@ const Dashboard = () => {
     }
   };
 
+  const handleDecision = async (id, decision) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.put(`http://localhost:5000/api/orders/${id}/decision`, { decision }, config);
+      setIncomingOrders(incomingOrders.map(o => o._id === id ? data : o));
+      toast.success(`Order ${decision}`);
+      if (decision === 'Rejected') {
+        const booksRes = await axios.get('http://localhost:5000/api/books/mybooks', config);
+        setBooks(booksRes.data);
+      }
+    } catch (error) {
+       toast.error(error.response?.data?.message || `Failed to ${decision} order`);
+    }
+  };
+
+  const handleMutualConfirm = async (id) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.put(`http://localhost:5000/api/orders/${id}/mutual-confirm`, {}, config);
+      setIncomingOrders(incomingOrders.map(o => o._id === id ? data : o));
+      toast.success(data.status === 'Completed' ? 'Purchase Completed!' : 'Confirmed. Waiting for buyer...');
+      if(data.status === 'Completed') {
+         const booksRes = await axios.get('http://localhost:5000/api/books/mybooks', config);
+         setBooks(booksRes.data);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error confirming order');
+    }
+  };
+
   if (loading) return <div style={{textAlign: 'center', marginTop: '50px'}}>Loading your dashboard...</div>;
 
   return (
@@ -60,7 +94,18 @@ const Dashboard = () => {
       <div style={headerSectionStyle}>
         <div>
             <h1 style={pageTitleStyle}>Seller Dashboard</h1>
-            <p style={{color: '#666', margin: 0}}>Manage your inventory and track your sales.</p>
+            <p style={{color: '#666', margin: 0, display: 'flex', alignItems: 'center'}}>
+               Manage your inventory and track your sales.
+               {user.trustScore !== undefined && (
+                   <span style={{
+                       marginLeft: '15px', backgroundColor: '#fff3cd', color: '#856404', 
+                       padding: '4px 10px', borderRadius: '12px', fontSize: '0.9rem', 
+                       fontWeight: 'bold', border: '1px solid #ffeeba'
+                   }}>
+                       ⭐ Trust Score: {user.trustScore}
+                   </span>
+               )}
+            </p>
         </div>
         <Link to="/list-book" style={addButtonStyle}>
             <FaPlus style={{marginRight: '8px'}} /> List New Book
@@ -97,6 +142,58 @@ const Dashboard = () => {
             </div>
         </div>
       </div>
+
+      {/* INCOMING REQUESTS SECTION */}
+      {incomingOrders.length > 0 && (
+         <div style={{marginBottom: '40px'}}>
+            <h3 style={sectionTitleStyle}>Incoming Purchase Requests & Active Orders</h3>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+               {incomingOrders.map(order => (
+                  <div key={order._id} style={orderCardStyle}>
+                      <div style={orderHeaderStyle}>
+                         <span>Order #{order._id.substring(0, 10)}</span>
+                         <span style={getStatusBadge(order.status)}>{order.status}</span>
+                      </div>
+                      <div style={orderBodyStyle}>
+                         <div style={{fontWeight: 'bold', fontSize: '1.1rem'}}>{order.bookTitle}</div>
+                         <div style={{color: '#666', marginBottom: '10px'}}>
+                             Buyer: {order.buyer?.full_name}
+                         </div>
+
+                         {/* Show buyer info if accepted/completed */}
+                         {(order.status === 'Accepted' || order.status === 'Completed') && order.buyer && (
+                             <div style={contactBoxStyle}>
+                                 <p style={{margin: '0 0 5px 0', color: '#333'}}><strong>Meet the buyer:</strong></p>
+                                 <p style={{margin: '2px 0'}}><strong>Contact:</strong> {order.buyer.phone || 'N/A'}</p>
+                                 <p style={{margin: '2px 0'}}><strong>Address:</strong> {order.buyer.address || 'N/A'}</p>
+                             </div>
+                         )}
+
+                         {/* Actions */}
+                         <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
+                            {order.status === 'Pending Approval' && (
+                               <>
+                                 <button onClick={() => handleDecision(order._id, 'Accepted')} className="btn btn-success" style={{flex: 1}}>Accept</button>
+                                 <button onClick={() => handleDecision(order._id, 'Rejected')} className="btn btn-danger" style={{flex: 1}}>Reject</button>
+                               </>
+                            )}
+                            {order.status === 'Accepted' && (
+                                <button 
+                                    onClick={() => handleMutualConfirm(order._id)} 
+                                    className="btn btn-primary" 
+                                    style={{flex: 1}}
+                                    disabled={order.sellerConfirmed}
+                                >
+                                    {order.sellerConfirmed ? 'Waiting for buyer to confirm...' : 'I gave this book'}
+                                </button>
+                            )}
+                         </div>
+                      </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+      )}
 
       {/* INVENTORY GRID */}
       <h3 style={sectionTitleStyle}>Your Inventory</h3>
@@ -280,6 +377,26 @@ const getBadgeStyle = (status) => {
     if (status === 'available') return { ...base, backgroundColor: '#00b894', color: 'white' };
     if (status === 'reserved') return { ...base, backgroundColor: '#fdcb6e', color: '#2d3436' };
     return { ...base, backgroundColor: '#636e72', color: 'white' };
+};
+
+const orderCardStyle = {
+    backgroundColor: 'white', borderRadius: '8px', border: '1px solid #ddd', overflow: 'hidden'
+};
+const orderHeaderStyle = {
+    backgroundColor: '#f8f9fa', padding: '12px 15px', borderBottom: '1px solid #ddd',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold'
+};
+const orderBodyStyle = { padding: '15px' };
+const contactBoxStyle = {
+    marginTop: '10px', fontSize: '0.9em', color: '#555', backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '5px'
+};
+const getStatusBadge = (status) => {
+    const base = { padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', color: 'white' };
+    if (status === 'Pending Approval') return { ...base, backgroundColor: '#ffc107', color: '#333' };
+    if (status === 'Accepted') return { ...base, backgroundColor: '#17a2b8' };
+    if (status === 'Completed') return { ...base, backgroundColor: '#28a745' };
+    if (status === 'Rejected' || status === 'Cancelled') return { ...base, backgroundColor: '#dc3545' };
+    return base;
 };
 
 export default Dashboard;

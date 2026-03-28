@@ -15,13 +15,14 @@ const ListBook = () => {
     genre: '',
     condition: 'Like New',
     price: '',
-    description: ''
+    description: '',
+    locationTag: ''
   });
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null); // To show the image before uploading
 
-  const { title, author, genre, condition, price, description } = formData;
+  const { title, author, genre, condition, price, description, locationTag } = formData;
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -53,6 +54,7 @@ const ListBook = () => {
     uploadData.append('condition', condition);
     uploadData.append('price', price);
     uploadData.append('description', description);
+    uploadData.append('locationTag', locationTag);
     uploadData.append('image', image);
 
     try {
@@ -168,6 +170,25 @@ const ListBook = () => {
                   />
                 </div>
               </div>
+            </div>
+
+            <div style={inputGroupStyle}>
+              <label style={labelStyle}>Location / Campus</label>
+              <select 
+                name="locationTag" 
+                value={locationTag} 
+                onChange={onChange} 
+                style={{...inputStyle, paddingLeft: '15px'}}
+                required
+              >
+                <option value="" disabled>Select Location</option>
+                <option value="SDJ International">SDJ International</option>
+                <option value="VNSGU">VNSGU</option>
+                <option value="SVNIT">SVNIT</option>
+                <option value="Vesu">Vesu</option>
+                <option value="Adajan">Adajan</option>
+                <option value="Piplod">Piplod</option>
+              </select>
             </div>
 
             <div style={inputGroupStyle}>

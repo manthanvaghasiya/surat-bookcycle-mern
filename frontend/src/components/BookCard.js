@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaMapMarkerAlt, FaStar } from 'react-icons/fa';
 
 const BookCard = ({ book }) => {
   // Helper to fix image paths (converts backslashes to forward slashes for URLs)
@@ -23,7 +24,22 @@ const BookCard = ({ book }) => {
         </div>
         <div style={contentStyle}>
           <h3 style={titleStyle}>{book.title}</h3>
-          <p style={authorStyle}>by {book.author}</p>
+          
+          <div style={sellerSectionStyle}>
+              <span style={authorStyle}>by {book.author}</span>
+              {book.user && book.user.trustScore !== undefined && (
+                 <span style={trustScoreVariantStyle}>
+                    <FaStar style={{color: '#ffc107', marginRight: '4px'}}/>
+                    {book.user.trustScore}
+                 </span>
+              )}
+          </div>
+
+          <div style={locationStyle}>
+              <FaMapMarkerAlt style={{marginRight: '5px', color: '#dc3545'}}/>
+              {book.locationTag || 'Surat'}
+          </div>
+
           <h4 style={priceStyle}>₹{book.price}</h4>
           
           {book.status !== 'available' && (
@@ -53,10 +69,13 @@ const cardStyle = {
 };
 const imgContainerStyle = { height: '220px', overflow: 'hidden', backgroundColor: '#f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'center' };
 const imgStyle = { width: '100%', height: '100%', objectFit: 'cover' };
-const contentStyle = { padding: '15px', textAlign: 'left', flexGrow: 1 };
+const contentStyle = { padding: '15px', textAlign: 'left', flexGrow: 1, display: 'flex', flexDirection: 'column' };
 const titleStyle = { margin: '10px 0 5px', fontSize: '1.1em', fontWeight: '700', color: '#1e293b' };
+const sellerSectionStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' };
 const authorStyle = { margin: '0', color: '#64748b', fontSize: '0.9em' };
-const priceStyle = { margin: '10px 0 0', color: '#2563eb', fontSize: '1.2em', fontWeight: 'bold' };
+const trustScoreVariantStyle = { fontSize: '0.85em', fontWeight: 'bold', color: '#666', display: 'flex', alignItems: 'center' };
+const locationStyle = { margin: '0 0 10px 0', fontSize: '0.85em', color: '#64748b', display: 'flex', alignItems: 'center' };
+const priceStyle = { margin: 'auto 0 0 0', color: '#2563eb', fontSize: '1.2em', fontWeight: 'bold' };
 const overlayStyle = {
     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
     backgroundColor: 'rgba(255,255,255,0.85)',

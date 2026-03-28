@@ -2,11 +2,11 @@ const Book = require('../models/Book');
 const fs = require('fs');
 const path = require('path');
 
-// @desc    Fetch all books (with optional Search Keyword)
-// @route   GET /api/books?keyword=...
+// @desc    Fetch all books (with optional Search Keyword and Location)
+// @route   GET /api/books?keyword=...&location=...
 const getBooks = async (req, res) => {
     // Replicates your PHP "WHERE title LIKE %search%" logic
-    const keyword = req.query.keyword
+    const keywordFilter = req.query.keyword
         ? {
               $or: [
                   { title: { $regex: req.query.keyword, $options: 'i' } }, // Case insensitive
@@ -15,15 +15,21 @@ const getBooks = async (req, res) => {
           }
         : {};
 
-    // Find books matching keyword, sort by newest first
-    const books = await Book.find({ ...keyword }).sort({ createdAt: -1 });
+    const locationFilter = req.query.location
+        ? { locationTag: req.query.location }
+        : {};
+
+    // Find books matching keyword and location, sort by newest first
+    const books = await Book.find({ ...keywordFilter, ...locationFilter })
+        .populate('user', 'full_name trustScore')
+        .sort({ createdAt: -1 });
     res.json(books);
 };
 
 // @desc    Fetch single book
 // @route   GET /api/books/:id
 const getBookById = async (req, res) => {
-    const book = await Book.findById(req.params.id).populate('user', 'full_name email');
+    const book = await Book.findById(req.params.id).populate('user', 'full_name email trustScore campusOrArea');
 
     if (book) {
         res.json(book);
@@ -40,7 +46,7 @@ const createBook = async (req, res) => {
         return res.status(400).json({ message: 'Please upload an image' });
     }
 
-    const { title, author, genre, condition, price, description } = req.body;
+    const { title, author, genre, condition, price, description, locationTag } = req.body;
 
     const book = new Book({
         user: req.user._id, // Set the seller as the logged-in user
@@ -50,6 +56,7 @@ const createBook = async (req, res) => {
         condition,
         price,
         description,
+        locationTag,
         image: req.file.path, // Save the path: "uploads\image-123.jpg"
         status: 'available',
     });
@@ -116,6 +123,7 @@ const updateBook = async (req, res) => {
         book.condition = req.body.condition || book.condition;
         book.price = req.body.price || book.price;
         book.description = req.body.description || book.description;
+        book.locationTag = req.body.locationTag || book.locationTag;
 
         // 3. If a NEW image is uploaded, update it. Otherwise, keep the old one.
         if (req.file) {

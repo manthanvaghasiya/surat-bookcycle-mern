@@ -39,7 +39,7 @@ const BookDetails = () => {
       // Call the Order API
       await axios.post('http://localhost:5000/api/orders', { bookId: book._id }, config);
 
-      toast.success('Order placed! Please contact the seller.');
+      toast.success('Order requested! Awaiting seller approval.');
       navigate('/myorders'); // Redirect to orders page
     } catch (error) {
       toast.error(error.response?.data?.message || 'Purchase failed');

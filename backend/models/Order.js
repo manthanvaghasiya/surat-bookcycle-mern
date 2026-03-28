@@ -25,11 +25,19 @@ const orderSchema = mongoose.Schema({
         required: true,
         default: 0.0,
     },
+    buyerConfirmed: {
+        type: Boolean,
+        default: false,
+    },
+    sellerConfirmed: {
+        type: Boolean,
+        default: false,
+    },
     status: {
         type: String,
         required: true,
-        default: 'Pending',
-        enum: ['Pending', 'Completed', 'Cancelled'], // Matches your PHP status
+        default: 'Pending Approval',
+        enum: ['Pending Approval', 'Accepted', 'Rejected', 'Completed', 'Cancelled'],
     }
 }, {
     timestamps: true // Matches 'order_date'

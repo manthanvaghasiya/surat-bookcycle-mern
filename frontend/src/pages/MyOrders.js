@@ -32,21 +32,21 @@ const MyOrders = () => {
     }
   }, [user, navigate]);
 
-  // Handle Confirm Purchase
-  const handleConfirm = async (id) => {
-    if (!window.confirm('This will mark the order as completed. Continue?')) return;
+  // Handle Mutual Confirm
+  const handleMutualConfirm = async (id) => {
+    if (!window.confirm('Have you safely received the book from the seller?')) return;
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.put(`http://localhost:5000/api/orders/${id}/confirm`, {}, config);
+      const { data } = await axios.put(`http://localhost:5000/api/orders/${id}/mutual-confirm`, {}, config);
       
       // Update UI locally
       setOrders(orders.map(order => 
-        order._id === id ? { ...order, status: 'Completed' } : order
+        order._id === id ? data : order
       ));
-      toast.success('Purchase Confirmed!');
+      toast.success(data.status === 'Completed' ? 'Purchase Completed!' : 'Confirmed. Waiting for seller...');
     } catch (error) {
-      toast.error('Error confirming order');
+      toast.error(error.response?.data?.message || 'Error confirming order');
     }
   };
 
@@ -98,25 +98,37 @@ const MyOrders = () => {
                     </div>
                 </div>
 
-                {/* Actions (Only for Pending Orders) */}
-                {order.status === 'Pending' && (
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                {/* Show seller info if accepted/completed */}
+                {(order.status === 'Accepted' || order.status === 'Completed') && order.seller && (
+                  <div style={{marginTop: '10px', fontSize: '0.9em', color: '#555', backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '5px'}}>
+                    <p style={{margin: '2px 0', color: '#333'}}><strong>Meet the seller at:</strong></p>
+                    <p style={{margin: '2px 0'}}><strong>Contact:</strong> {order.seller.phone || 'N/A'}</p>
+                    <p style={{margin: '2px 0'}}><strong>Address:</strong> {order.seller.address || 'N/A'}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                  {order.status === 'Pending Approval' && (
                     <button 
                         onClick={() => handleCancel(order._id)} 
                         className="btn btn-danger" 
                         style={{flex: 1}}
                     >
-                        Cancel Order
+                        Cancel Request
                     </button>
+                  )}
+                  {order.status === 'Accepted' && (
                     <button 
-                        onClick={() => handleConfirm(order._id)} 
+                        onClick={() => handleMutualConfirm(order._id)} 
                         className="btn btn-success" 
                         style={{flex: 1}}
+                        disabled={order.buyerConfirmed}
                     >
-                        Confirm Purchase
+                        {order.buyerConfirmed ? 'Waiting for seller to confirm...' : 'I received this book'}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -141,9 +153,10 @@ const itemStyle = {
 };
 const getStatusStyle = (status) => {
     const base = { padding: '5px 10px', borderRadius: '15px', fontSize: '0.85em', color: 'white' };
-    if (status === 'Pending') return { ...base, backgroundColor: '#ffc107', color: '#333' };
+    if (status === 'Pending Approval') return { ...base, backgroundColor: '#ffc107', color: '#333' };
+    if (status === 'Accepted') return { ...base, backgroundColor: '#17a2b8' };
     if (status === 'Completed') return { ...base, backgroundColor: '#28a745' };
-    if (status === 'Cancelled') return { ...base, backgroundColor: '#dc3545' };
+    if (status === 'Rejected' || status === 'Cancelled') return { ...base, backgroundColor: '#dc3545' };
     return base;
 };
 

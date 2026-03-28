@@ -36,6 +36,10 @@ const bookSchema = mongoose.Schema({
         type: String,
         required: true, // Stores the filename/path
     },
+    locationTag: {
+        type: String,
+        required: true,
+    },
     status: {
         type: String,
         required: true,

@@ -40,6 +40,8 @@ const registerUser = async (req, res) => {
             _id: user.id,
             full_name: user.full_name,
             email: user.email,
+            trustScore: user.trustScore,
+            campusOrArea: user.campusOrArea,
             token: generateToken(user.id), // Send token immediately so they are logged in
         });
     } else {
@@ -62,6 +64,8 @@ const loginUser = async (req, res) => {
             full_name: user.full_name,
             email: user.email,
             isAdmin: user.isAdmin,
+            trustScore: user.trustScore,
+            campusOrArea: user.campusOrArea,
             token: generateToken(user.id),
         });
     } else {
