@@ -145,6 +145,11 @@ const mutualConfirm = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
+        // STRICT GUARD CLAUSE: Prevent double-click trust score exploits
+        if (order.status === 'Completed') {
+            return res.status(400).json({ message: 'Order is already completed.' });
+        }
+
         if (order.status !== 'Accepted') {
             return res.status(400).json({ message: 'Order must be Accepted to confirm' });
         }
@@ -185,13 +190,14 @@ const cancelOrder = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-        // Check if user is the buyer
-        if (order.buyer.toString() !== req.user._id.toString()) {
+        // Modify cancellation logic: Either buyer OR seller can cancel
+        if (order.buyer.toString() !== req.user._id.toString() && order.seller.toString() !== req.user._id.toString()) {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
-        if (order.status !== 'Pending Approval') {
-            return res.status(400).json({ message: 'Cannot cancel an order that is not Pending Approval' });
+        // Allow cancellation on Pending Approval OR Accepted
+        if (order.status !== 'Pending Approval' && order.status !== 'Accepted') {
+            return res.status(400).json({ message: 'Cannot cancel an order that is not Pending or Accepted' });
         }
 
         // Update Order to Cancelled

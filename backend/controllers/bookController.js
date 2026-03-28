@@ -130,7 +130,13 @@ const updateBook = async (req, res) => {
 
         // 3. If a NEW image is uploaded, update it. Otherwise, keep the old one.
         if (req.file) {
-             // (Optional: You could delete the old file here using fs.unlinkSync to save space)
+             // Delete the old file using fs.unlinkSync to save space (Memory Leak Fix)
+             if (book.image) {
+                 const imagePath = path.resolve(book.image);
+                 if (fs.existsSync(imagePath)) {
+                     fs.unlinkSync(imagePath);
+                 }
+             }
              book.image = req.file.path;
         }
 
