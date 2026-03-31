@@ -1,11 +1,34 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { FaUserCircle, FaSignOutAlt, FaPlus } from 'react-icons/fa';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        if (user && user.token) {
+           const config = { headers: { Authorization: `Bearer ${user.token}` } };
+           // Catch potential 404s/errors securely
+           const { data } = await axios.get('http://localhost:5000/api/messages/unread-count', config);
+           setUnreadCount(data.count);
+        }
+      } catch (err) {
+        console.error('Error fetching unread count');
+      }
+    };
+    
+    fetchUnread();
+    
+    // Poll every 30 seconds for a real-time feel
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const onLogout = () => {
     logout();
@@ -39,7 +62,12 @@ const Header = () => {
 
                 <li style={profileContainerStyle}>
                     <FaUserCircle style={{fontSize: '1.2rem', color: '#007bff'}} />
-                    <Link to="/profile" style={{fontWeight: '600', textDecoration: 'none', color: '#333'}}>{user.full_name.split(' ')[0]}</Link>
+                    <Link to="/profile" style={{fontWeight: '600', textDecoration: 'none', color: '#333', position: 'relative'}}>
+                        {user.full_name.split(' ')[0]}
+                        {unreadCount > 0 && (
+                            <span style={badgeCss}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                        )}
+                    </Link>
                     <button onClick={onLogout} style={logoutBtnStyle} title="Logout">
                         <FaSignOutAlt />
                     </button>
@@ -69,5 +97,9 @@ const actionBtnStyle = { display: 'flex', alignItems: 'center', gap: '8px', back
 const registerBtnStyle = { backgroundColor: '#007bff', color: '#fff', padding: '8px 20px', borderRadius: '4px', textDecoration: 'none', fontWeight: '600' };
 const profileContainerStyle = { display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid #eee', paddingLeft: '20px', marginLeft: '10px' };
 const logoutBtnStyle = { background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '1.1rem', padding: '5px', display: 'flex', alignItems: 'center' };
+const badgeCss = {
+  position: 'absolute', top: '-8px', right: '-15px', backgroundColor: '#dc3545',
+  color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 'bold'
+};
 
 export default Header;

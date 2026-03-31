@@ -1,11 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { sendMessage, getMessages, replyToMessage, getMyMessages } = require('../controllers/messageController');
+const { 
+    sendMessage, 
+    getMessages, 
+    replyToMessage, 
+    getMyMessages,
+    userReplyToMessage,
+    markAsRead,
+    getUnreadCount,
+    resolveMessage,
+    adminMarkRead
+} = require('../controllers/messageController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.post('/', sendMessage); // Public (anyone can send)
-router.get('/my-messages', protect, getMyMessages); // Protected (user's messages)
-router.get('/', protect, admin, getMessages); // Admin only (view messages)
-router.put('/:id/reply', protect, admin, replyToMessage); // Admin only (reply to messages)
+
+// Protected (User endpoints)
+router.get('/my-messages', protect, getMyMessages);
+router.get('/unread-count', protect, getUnreadCount);
+router.put('/mark-read', protect, markAsRead);
+router.put('/:id/user-reply', protect, userReplyToMessage);
+
+// Admin-only endpoints
+router.get('/', protect, admin, getMessages); 
+router.put('/:id/reply', protect, admin, replyToMessage); 
+router.put('/:id/resolve', protect, admin, resolveMessage);
+router.put('/admin-mark-read/:id', protect, admin, adminMarkRead);
 
 module.exports = router;

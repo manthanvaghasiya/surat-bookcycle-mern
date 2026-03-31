@@ -155,11 +155,36 @@ const AdminDashboard = () => {
           const { data: updatedMsg } = await axios.put(`http://localhost:5000/api/messages/${messageId}/reply`, { replyText }, config);
           toast.success('Reply sent successfully!');
           setData(data.map(m => m._id === messageId ? updatedMsg : m));
-          setReplyingTo(null);
           setReplyText('');
       } catch (error) {
           toast.error(error.response?.data?.message || 'Failed to send reply');
       }
+  };
+
+  const resolveMessage = async (messageId) => {
+      try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const { data: updatedMsg } = await axios.put(`http://localhost:5000/api/messages/${messageId}/resolve`, {}, config);
+          toast.success('Ticket marked as resolved');
+          setData(data.map(m => m._id === messageId ? updatedMsg : m));
+      } catch (error) {
+          toast.error('Failed to resolve ticket');
+      }
+  };
+
+  const handleOpenTicket = async (messageId) => {
+      if (replyingTo === messageId) {
+          setReplyingTo(null);
+          return;
+      }
+      setReplyingTo(messageId);
+      setReplyText('');
+      
+      try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          await axios.put(`http://localhost:5000/api/messages/admin-mark-read/${messageId}`, {}, config);
+          setData(prev => prev.map(m => m._id === messageId ? { ...m, adminHasUnread: false } : m));
+      } catch(e) {}
   };
 
   // Settings: Save
@@ -327,19 +352,21 @@ const AdminDashboard = () => {
                                     {/* MESSAGES ROW */}
                                     {activeTab === 'messages' && (
                                         <>
-                                            <td style={tdStyle}><strong>{item.name}</strong><div style={{fontSize: '0.85rem', color: '#888'}}>{item.email}</div></td>
+                                            <td style={tdStyle}>
+                                                <strong>{item.name}</strong> 
+                                                {item.adminHasUnread && <span style={{marginLeft: '8px', backgroundColor: '#e53e3e', color: 'white', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', verticalAlign: 'middle'}}>NEW</span>}
+                                                <div style={{fontSize: '0.85rem', color: '#888'}}>{item.email}</div>
+                                            </td>
                                             <td style={tdStyle}>{item.subject}</td>
                                             <td style={tdStyle}>{(item.message || '').substring(0, 50)}...</td>
                                             <td style={tdStyle}>{new Date(item.createdAt).toLocaleDateString()}</td>
                                             <td style={tdStyle}>
-                                                <span style={getStatusBadge(item.status === 'Replied' ? 'Completed' : 'Pending')}>{item.status || 'Pending'}</span>
+                                                <span style={getStatusBadge(item.status)}>{item.status || 'Pending'}</span>
                                             </td>
                                             <td style={tdStyle}>
                                                 <button onClick={() => deleteItem(item._id)} style={deleteBtnStyle} title="Delete"><FaTrash /></button>
                                                 &nbsp;
-                                                {item.status !== 'Replied' && (
-                                                    <button onClick={() => { setReplyingTo(item._id); setReplyText(''); }} style={{...replyBtnStyle, border: 'none'}} title="Reply"><FaReply /></button>
-                                                )}
+                                                <button onClick={() => handleOpenTicket(item._id)} style={{...replyBtnStyle, border: 'none'}} title={item.status === 'Resolved' ? "View Thread" : "Reply"}><FaReply /></button>
                                             </td>
                                         </>
                                     )}
@@ -384,21 +411,62 @@ const AdminDashboard = () => {
                                     )}
                                 </tr>
                                 {activeTab === 'messages' && replyingTo === item._id && (
-                                    <tr style={{backgroundColor: '#eaf4fc'}}>
-                                        <td colSpan="6" style={{padding: '15px 24px'}}>
-                                            <div style={{display: 'flex', gap: '10px'}}>
-                                                <textarea
-                                                    style={{flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical'}}
-                                                    rows="2"
-                                                    placeholder="Type your reply to the user here..."
-                                                    value={replyText}
-                                                    onChange={e => setReplyText(e.target.value)}
-                                                ></textarea>
-                                                <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                                                    <button onClick={() => handleReplySubmit(item._id)} className="btn btn-primary" style={{padding: '5px 15px'}}>Send Reply</button>
-                                                    <button onClick={() => setReplyingTo(null)} className="btn btn-secondary" style={{padding: '5px 15px'}}>Cancel</button>
-                                                </div>
+                                    <tr style={{backgroundColor: '#fafbfc'}}>
+                                        <td colSpan="6" style={{padding: '20px 30px'}}>
+                                            <div style={{border: '1px solid #e2e8f0', borderRadius: '8px', padding: '15px', backgroundColor: '#fff', marginBottom: '15px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                                                {item.conversation && item.conversation.length > 0 ? (
+                                                    item.conversation.map((c, i) => (
+                                                        <div key={i} style={{alignSelf: c.sender === 'Admin' ? 'flex-end' : 'flex-start', maxWidth: '85%'}}>
+                                                            <div style={{
+                                                                padding: '10px 14px', borderRadius: '18px', fontSize: '0.95rem',
+                                                                backgroundColor: c.sender === 'Admin' ? '#3182ce' : '#edf2f7',
+                                                                color: c.sender === 'Admin' ? 'white' : '#2d3748',
+                                                                borderBottomRightRadius: c.sender === 'Admin' ? '4px' : '18px',
+                                                                borderBottomLeftRadius: c.sender === 'User' ? '4px' : '18px',
+                                                                lineHeight: '1.4'
+                                                            }}>
+                                                                {c.text}
+                                                            </div>
+                                                            <div style={{fontSize: '0.7rem', color: '#a0aec0', marginTop: '4px', textAlign: c.sender === 'Admin' ? 'right' : 'left'}}>
+                                                                {c.sender === 'Admin' ? 'You' : item.name} • {new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <>
+                                                        <div style={{alignSelf: 'flex-start', maxWidth: '85%'}}>
+                                                            <div style={{padding: '10px 14px', borderRadius: '18px', fontSize: '0.95rem', backgroundColor: '#edf2f7', color: '#2d3748', borderBottomLeftRadius: '4px'}}>{item.message}</div>
+                                                            <div style={{fontSize: '0.7rem', color: '#a0aec0', marginTop: '4px', textAlign: 'left'}}>{item.name}</div>
+                                                        </div>
+                                                        {item.adminReply && (
+                                                            <div style={{alignSelf: 'flex-end', maxWidth: '85%'}}>
+                                                                <div style={{padding: '10px 14px', borderRadius: '18px', fontSize: '0.95rem', backgroundColor: '#3182ce', color: 'white', borderBottomRightRadius: '4px'}}>{item.adminReply}</div>
+                                                                <div style={{fontSize: '0.7rem', color: '#a0aec0', marginTop: '4px', textAlign: 'right'}}>You</div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
+                                            
+                                            {item.status !== 'Resolved' && item.status !== 'Replied' && item.status !== 'Completed' ? (
+                                                <div style={{display: 'flex', gap: '15px'}}>
+                                                    <textarea
+                                                        style={{flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e0', resize: 'vertical'}}
+                                                        rows="2"
+                                                        placeholder="Type your reply to the user here..."
+                                                        value={replyText}
+                                                        onChange={e => setReplyText(e.target.value)}
+                                                    ></textarea>
+                                                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px'}}>
+                                                        <button onClick={() => handleReplySubmit(item._id)} className="btn btn-primary" style={{padding: '8px', flex: 1}}>Send Reply</button>
+                                                        <button onClick={() => resolveMessage(item._id)} className="btn btn-success" style={{padding: '8px', flex: 1}} title="Mark as Resolved">Resolve</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{textAlign: 'center', color: '#a0aec0', fontSize: '0.85rem', fontStyle: 'italic'}}>
+                                                    This ticket has been marked as resolved.
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 )}
@@ -442,9 +510,10 @@ const replyBtnStyle = { backgroundColor: '#ebf8ff', color: '#3182ce', border: '1
 
 const getStatusBadge = (status) => {
     const base = { padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', display: 'inline-block' };
-    if (status === 'available' || status === 'Completed') return { ...base, backgroundColor: '#c6f6d5', color: '#22543d' }; 
+    if (status === 'available' || status === 'Completed' || status === 'Resolved') return { ...base, backgroundColor: '#c6f6d5', color: '#22543d' }; 
     if (status === 'sold' || status === 'Cancelled') return { ...base, backgroundColor: '#cbd5e0', color: '#4a5568' }; 
-    return { ...base, backgroundColor: '#feebc8', color: '#744210' }; // Pending/Reserved
+    if (status === 'Awaiting User') return { ...base, backgroundColor: '#bee3f8', color: '#2c5282' }; 
+    return { ...base, backgroundColor: '#feebc8', color: '#744210' }; // Pending/Open/Reserved
 };
 
 export default AdminDashboard;
