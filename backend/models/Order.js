@@ -25,6 +25,11 @@ const orderSchema = mongoose.Schema({
         required: true,
         default: 0.0,
     },
+    quantity: {
+        type: Number,
+        required: true,
+        default: 1,
+    },
     buyerConfirmed: {
         type: Boolean,
         default: false,

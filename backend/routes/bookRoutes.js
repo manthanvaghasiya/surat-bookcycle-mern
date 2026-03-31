@@ -6,7 +6,8 @@ const {
     createBook,
     deleteBook,
     getMyBooks,
-    updateBook
+    updateBook,
+    createBookReview
 } = require('../controllers/bookController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -20,5 +21,6 @@ router.get('/:id', getBookById); // Details page
 router.post('/', protect, upload.single('image'), createBook); // List a book (with image)
 router.delete('/:id', protect, deleteBook); // Delete a book
 router.put('/:id', protect, upload.single('image'), updateBook);
+router.post('/:id/reviews', protect, createBookReview);
 
 module.exports = router;

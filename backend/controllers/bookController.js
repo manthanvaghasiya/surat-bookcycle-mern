@@ -46,7 +46,7 @@ const createBook = async (req, res) => {
         return res.status(400).json({ message: 'Please upload an image' });
     }
 
-    const { title, author, genre, condition, price, description, locationTag } = req.body;
+    const { title, author, genre, condition, price, description, locationTag, quantity } = req.body;
 
     const book = new Book({
         user: req.user._id, // Set the seller as the logged-in user
@@ -57,6 +57,7 @@ const createBook = async (req, res) => {
         price,
         description,
         locationTag,
+        quantity: quantity || 1,
         image: req.file.path, // Save the path: "uploads\image-123.jpg"
         status: 'available',
     });
@@ -127,6 +128,7 @@ const updateBook = async (req, res) => {
         book.price = req.body.price || book.price;
         book.description = req.body.description || book.description;
         book.locationTag = req.body.locationTag || book.locationTag;
+        book.quantity = req.body.quantity !== undefined ? req.body.quantity : book.quantity;
 
         // 3. If a NEW image is uploaded, update it. Otherwise, keep the old one.
         if (req.file) {
@@ -147,6 +149,43 @@ const updateBook = async (req, res) => {
     }
 };
 
+// @desc    Create new review
+// @route   POST /api/books/:id/reviews
+const createBookReview = async (req, res) => {
+    const { rating, comment } = req.body;
+
+    const book = await Book.findById(req.params.id);
+
+    if (book) {
+        const alreadyReviewed = book.reviews.find(
+            (r) => r.user.toString() === req.user._id.toString()
+        );
+
+        if (alreadyReviewed) {
+            return res.status(400).json({ message: 'Product already reviewed' });
+        }
+
+        const review = {
+            name: req.user.full_name,
+            rating: Number(rating),
+            comment,
+            user: req.user._id,
+        };
+
+        book.reviews.push(review);
+        book.numReviews = book.reviews.length;
+
+        book.rating =
+            book.reviews.reduce((acc, item) => item.rating + acc, 0) /
+            book.reviews.length;
+
+        await book.save();
+        res.status(201).json({ message: 'Review added' });
+    } else {
+        res.status(404).json({ message: 'Book not found' });
+    }
+};
+
 module.exports = {
     getBooks,
     getBookById,
@@ -154,4 +193,5 @@ module.exports = {
     deleteBook,
     getMyBooks,
     updateBook,
+    createBookReview,
 };

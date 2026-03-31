@@ -3,9 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path'); // <--- IMPORTANT IMPORT
 const connectDB = require('./config/db');
+const scheduleCronJobs = require('./utils/cronJobs');
 
 // Connect to Database
 connectDB();
+
+// Initialize Cron Jobs
+scheduleCronJobs();
 
 const app = express();
 

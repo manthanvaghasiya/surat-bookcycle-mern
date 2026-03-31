@@ -10,7 +10,9 @@ const addOrder = async (req, res) => {
         return res.status(400).json({ message: "Please update your phone number and address in your profile before buying." });
     }
 
-    const { bookId } = req.body;
+    const { bookId, quantity } = req.body;
+
+    const requestedQuantity = quantity || 1;
 
     // 1. Find the book and ensure it is available
     const book = await Book.findById(bookId);
@@ -25,8 +27,14 @@ const addOrder = async (req, res) => {
     }
 
     // 3. Status Check: Is it already sold or reserved?
-    if (book.status !== 'available') {
+    if (book.status !== 'available' && book.quantity <= 0) {
+        // We only block if there's no quantity left
         return res.status(400).json({ message: 'Book is no longer available' });
+    }
+
+    // Validation: Check if requested quantity exceeds book quantity
+    if (book.quantity < requestedQuantity) {
+        return res.status(400).json({ message: `Only ${book.quantity} copies left` });
     }
 
     // 4. Create the Order
@@ -36,13 +44,17 @@ const addOrder = async (req, res) => {
         book: book._id,
         bookTitle: book.title, // Snapshot
         bookPrice: book.price, // Snapshot
-        totalPrice: book.price,
+        totalPrice: book.price * requestedQuantity,
+        quantity: requestedQuantity,
     });
 
     const createdOrder = await order.save();
 
-    // 5. Update Book Status to 'reserved'
-    book.status = 'reserved';
+    // 5. Update Book Quantity and Status
+    book.quantity -= requestedQuantity;
+    if (book.quantity === 0) {
+        book.status = 'reserved';
+    }
     await book.save();
 
     res.status(201).json(createdOrder);
@@ -122,9 +134,10 @@ const sellerDecision = async (req, res) => {
             order.status = 'Accepted';
         } else if (decision === 'Rejected') {
             order.status = 'Rejected';
-            // Release the Book back to 'available'
+            // Release the Book back to 'available' and increment quantity
             const book = await Book.findById(order.book);
             if (book) {
+                book.quantity += order.quantity;
                 book.status = 'available';
                 await book.save();
             }
@@ -204,9 +217,10 @@ const cancelOrder = async (req, res) => {
         order.status = 'Cancelled';
         await order.save();
 
-        // Release the Book back to 'available'
+        // Release the Book back to 'available' and increment quantity
         const book = await Book.findById(order.book);
         if (book) {
+            book.quantity += order.quantity;
             book.status = 'available';
             await book.save();
         }
@@ -241,7 +255,11 @@ const adminOverrideOrder = async (req, res) => {
             } else if (decision === 'Cancelled') {
                 order.status = 'Cancelled';
                 const book = await Book.findById(order.book);
-                if (book) { book.status = 'available'; await book.save(); }
+                if (book) { 
+                    book.quantity += order.quantity;
+                    book.status = 'available'; 
+                    await book.save(); 
+                }
             } else {
                 return res.status(400).json({ message: 'Invalid decision' });
             }

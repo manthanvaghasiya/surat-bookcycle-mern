@@ -17,7 +17,7 @@ const Home = () => {
         let url = 'http://localhost:5000/api/books?';
         if (keyword) url += `keyword=${keyword}&`;
         if (location) url += `location=${location}`;
-            
+
         const { data } = await axios.get(url);
         setBooks(data);
         setLoading(false);
@@ -35,16 +35,16 @@ const Home = () => {
 
   return (
     <div style={{ paddingBottom: '60px' }}>
-      
+
       {/* 1. HERO SECTION */}
       <div style={heroSectionStyle}>
         <div style={heroContentStyle}>
           <h1 style={heroTitleStyle}>
-            The Smart Way to Buy & Sell <br/>
-            <span style={{color: '#ffc107'}}>Used Books</span> in Surat
+            The Smart Way to Buy & Sell <br />
+            <span style={{ color: '#ffc107' }}>Used Books</span> in Surat
           </h1>
           <p style={heroSubtitleStyle}>
-            Join your community. Save money on textbooks, 
+            Join our community. Save money on textbooks,
             make money from old reads, and reduce paper waste.
           </p>
         </div>
@@ -53,71 +53,71 @@ const Home = () => {
       {/* 2. FLOATING SEARCH BAR */}
       <div style={searchContainerStyle}>
         <form onSubmit={handleSearch} style={searchFormStyle}>
-            <FaSearch style={searchIconStyle} />
-            <input 
-                type="text" 
-                placeholder="Find a book (e.g., 'Java Programming', 'Wings of Fire')..." 
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                style={searchInputStyle}
-            />
-            <select 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)}
-                style={locationSelectStyle}
-            >
-                <option value="">All Areas/Campuses</option>
-                <option value="SDJ International">SDJ International</option>
-                <option value="VNSGU">VNSGU</option>
-                <option value="SVNIT">SVNIT</option>
-                <option value="Vesu">Vesu</option>
-                <option value="Adajan">Adajan</option>
-                <option value="Piplod">Piplod</option>
-            </select>
-            <button type="submit" style={searchButtonStyle}>Search</button>
+          <FaSearch style={searchIconStyle} />
+          <input
+            type="text"
+            placeholder="Find a book (e.g., 'Java Programming', 'Wings of Fire')..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={searchInputStyle}
+          />
+          <select
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            style={locationSelectStyle}
+          >
+            <option value="">All Areas/Campuses</option>
+            <option value="SDJ International">SDJ International</option>
+            <option value="VNSGU">VNSGU</option>
+            <option value="SVNIT">SVNIT</option>
+            <option value="Vesu">Vesu</option>
+            <option value="Adajan">Adajan</option>
+            <option value="Piplod">Piplod</option>
+          </select>
+          <button type="submit" style={searchButtonStyle}>Search</button>
         </form>
       </div>
 
       {/* 3. HOW IT WORKS (The Professional Touch) */}
       {!keyword && (
         <div className="container" style={featuresSectionStyle}>
-            <div style={featureCardStyle}>
-                <div style={iconCircleStyle}><FaBook /></div>
-                <h3>1. List It</h3>
-                <p style={featureTextStyle}>Upload details of your old books in seconds.</p>
-            </div>
-            <div style={featureCardStyle}>
-                <div style={iconCircleStyle}><FaComments /></div>
-                <h3>2. Connect</h3>
-                <p style={featureTextStyle}>Buyers find your book and request a purchase.</p>
-            </div>
-            <div style={featureCardStyle}>
-                <div style={iconCircleStyle}><FaHandshake /></div>
-                <h3>3. Exchange</h3>
-                <p style={featureTextStyle}>Meet on campus or nearby to exchange.</p>
-            </div>
+          <div style={featureCardStyle}>
+            <div style={iconCircleStyle}><FaBook /></div>
+            <h3>1. List It</h3>
+            <p style={featureTextStyle}>Upload details of your old books in seconds.</p>
+          </div>
+          <div style={featureCardStyle}>
+            <div style={iconCircleStyle}><FaComments /></div>
+            <h3>2. Connect</h3>
+            <p style={featureTextStyle}>Buyers find your book and request a purchase.</p>
+          </div>
+          <div style={featureCardStyle}>
+            <div style={iconCircleStyle}><FaHandshake /></div>
+            <h3>3. Exchange</h3>
+            <p style={featureTextStyle}>Meet on campus or nearby to exchange.</p>
+          </div>
         </div>
       )}
 
       {/* 4. LISTINGS GRID */}
       <div className="container" style={{ marginTop: '50px' }}>
         <div style={sectionHeaderWrapper}>
-            <h2 style={sectionHeaderStyle}>
-              {keyword ? `Search Results` : 'Fresh Recommendations'}
-            </h2>
-            <div style={resultCountStyle}>
-                {books.length} {books.length === 1 ? 'Book' : 'Books'} Found
-            </div>
+          <h2 style={sectionHeaderStyle}>
+            {keyword ? `Search Results` : 'Fresh Recommendations'}
+          </h2>
+          <div style={resultCountStyle}>
+            {books.length} {books.length === 1 ? 'Book' : 'Books'} Found
+          </div>
         </div>
-        
+
         {loading ? (
-            <p style={{textAlign: 'center', fontSize: '1.2rem', color: '#666'}}>Loading marketplace...</p>
+          <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#666' }}>Loading marketplace...</p>
         ) : books.length === 0 ? (
           <div style={emptyStateStyle}>
-            <img 
-                src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" 
-                alt="No books" 
-                style={{width: '80px', opacity: 0.5, marginBottom: '20px'}} 
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png"
+              alt="No books"
+              style={{ width: '80px', opacity: 0.5, marginBottom: '20px' }}
             />
             <h3>No books found matching your search.</h3>
             <p>Try searching for a different author or check back later.</p>
@@ -151,7 +151,7 @@ const heroContentStyle = {
 };
 
 const heroTitleStyle = {
-   color: 'white',
+  color: 'white',
   fontSize: '2.8rem',
   fontWeight: '800',
   marginBottom: '20px',
@@ -204,68 +204,68 @@ const searchInputStyle = {
 };
 
 const locationSelectStyle = {
-    marginLeft: '15px',
-    padding: '10px 15px',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    fontSize: '1rem',
-    outline: 'none',
-    backgroundColor: '#f9f9f9',
-    color: '#333'
+  marginLeft: '15px',
+  padding: '10px 15px',
+  borderRadius: '8px',
+  border: '1px solid #ddd',
+  fontSize: '1rem',
+  outline: 'none',
+  backgroundColor: '#f9f9f9',
+  color: '#333'
 };
 
 const searchButtonStyle = {
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    padding: '12px 30px',
-    borderRadius: '30px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    marginLeft: '10px'
+  backgroundColor: '#007bff',
+  color: 'white',
+  border: 'none',
+  padding: '12px 30px',
+  borderRadius: '30px',
+  fontWeight: 'bold',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  marginLeft: '10px'
 };
 
 const featuresSectionStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '40px',
-    marginTop: '60px',
-    flexWrap: 'wrap',
-    padding: '0 20px'
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '40px',
+  marginTop: '60px',
+  flexWrap: 'wrap',
+  padding: '0 20px'
 };
 
 const featureCardStyle = {
-    textAlign: 'center',
-    maxWidth: '250px'
+  textAlign: 'center',
+  maxWidth: '250px'
 };
 
 const iconCircleStyle = {
-    width: '60px',
-    height: '60px',
-    backgroundColor: '#e7f1ff',
-    color: '#007bff',
-    borderRadius: '50%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: '1.5rem',
-    margin: '0 auto 15px auto'
+  width: '60px',
+  height: '60px',
+  backgroundColor: '#e7f1ff',
+  color: '#007bff',
+  borderRadius: '50%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  fontSize: '1.5rem',
+  margin: '0 auto 15px auto'
 };
 
 const featureTextStyle = {
-    color: '#666',
-    fontSize: '0.95rem',
-    lineHeight: '1.5'
+  color: '#666',
+  fontSize: '0.95rem',
+  lineHeight: '1.5'
 };
 
 const sectionHeaderWrapper = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '15px'
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '30px',
+  borderBottom: '1px solid #eee',
+  paddingBottom: '15px'
 };
 
 const sectionHeaderStyle = {
@@ -276,8 +276,8 @@ const sectionHeaderStyle = {
 };
 
 const resultCountStyle = {
-    color: '#777',
-    fontWeight: '500'
+  color: '#777',
+  fontWeight: '500'
 };
 
 const gridStyle = {

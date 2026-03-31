@@ -16,13 +16,14 @@ const ListBook = () => {
     condition: 'Like New',
     price: '',
     description: '',
-    locationTag: ''
+    locationTag: '',
+    quantity: 1
   });
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null); // To show the image before uploading
 
-  const { title, author, genre, condition, price, description, locationTag } = formData;
+  const { title, author, genre, condition, price, description, locationTag, quantity } = formData;
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -55,6 +56,7 @@ const ListBook = () => {
     uploadData.append('price', price);
     uploadData.append('description', description);
     uploadData.append('locationTag', locationTag);
+    uploadData.append('quantity', quantity);
     uploadData.append('image', image);
 
     try {
@@ -166,6 +168,21 @@ const ListBook = () => {
                     onChange={onChange} 
                     placeholder="250" 
                     style={inputStyle} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={halfWidthStyle}>
+                <label style={labelStyle}>Quantity</label>
+                <div style={inputWrapperStyle}>
+                  <input 
+                    type="number" 
+                    name="quantity" 
+                    value={quantity} 
+                    onChange={onChange} 
+                    min="1"
+                    style={{...inputStyle, paddingLeft: '15px'}} 
                     required 
                   />
                 </div>

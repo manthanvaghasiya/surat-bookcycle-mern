@@ -16,14 +16,15 @@ const EditBook = () => {
     genre: '',
     condition: '',
     price: '',
-    description: ''
+    description: '',
+    quantity: 1
   });
 
   const [image, setImage] = useState(null);
   const [currentImage, setCurrentImage] = useState(''); // To show the old image
   const [preview, setPreview] = useState(null);
 
-  const { title, author, genre, condition, price, description } = formData;
+  const { title, author, genre, condition, price, description, quantity } = formData;
 
   // 1. Fetch Existing Data on Load
   useEffect(() => {
@@ -36,7 +37,8 @@ const EditBook = () => {
             genre: data.genre,
             condition: data.condition,
             price: data.price,
-            description: data.description
+            description: data.description,
+            quantity: data.quantity || 1
         });
         setCurrentImage(data.image);
       } catch (error) {
@@ -67,6 +69,7 @@ const EditBook = () => {
     uploadData.append('condition', condition);
     uploadData.append('price', price);
     uploadData.append('description', description);
+    uploadData.append('quantity', quantity);
     
     // Only append image if user selected a NEW one
     if (image) {
@@ -110,6 +113,10 @@ const EditBook = () => {
                 <div style={{flex: 1}}>
                     <label>Price (₹)</label>
                     <input type="number" name="price" value={price} onChange={onChange} style={inputStyle} required />
+                </div>
+                <div style={{flex: 1}}>
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" value={quantity} onChange={onChange} style={inputStyle} min="1" required />
                 </div>
             </div>
 

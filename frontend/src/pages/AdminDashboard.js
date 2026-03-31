@@ -14,6 +14,10 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({ totalUsers: 0, totalActiveBooks: 0, totalCompletedOrders: 0 });
   const [loading, setLoading] = useState(true);
 
+  // For Messages
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+
   // For Settings Tab
   const [settingsForm, setSettingsForm] = useState({ announcementText: '', isAnnouncementActive: false });
 
@@ -144,6 +148,20 @@ const AdminDashboard = () => {
       } catch (error) { toast.error(`Failed to ${action} report`); }
   };
 
+  // Messages: Send Reply
+  const handleReplySubmit = async (messageId) => {
+      try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const { data: updatedMsg } = await axios.put(`http://localhost:5000/api/messages/${messageId}/reply`, { replyText }, config);
+          toast.success('Reply sent successfully!');
+          setData(data.map(m => m._id === messageId ? updatedMsg : m));
+          setReplyingTo(null);
+          setReplyText('');
+      } catch (error) {
+          toast.error(error.response?.data?.message || 'Failed to send reply');
+      }
+  };
+
   // Settings: Save
   const saveSettings = async (e) => {
       e.preventDefault();
@@ -249,7 +267,7 @@ const AdminDashboard = () => {
                                 )}
                                 {activeTab === 'messages' && (
                                     <>
-                                        <th style={thStyle}>Sender</th><th style={thStyle}>Subject</th><th style={thStyle}>Message</th><th style={thStyle}>Date</th><th style={thStyle}>Actions</th>
+                                        <th style={thStyle}>Sender</th><th style={thStyle}>Subject</th><th style={thStyle}>Message</th><th style={thStyle}>Date</th><th style={thStyle}>Status</th><th style={thStyle}>Actions</th>
                                     </>
                                 )}
                                 {activeTab === 'users' && (
@@ -268,12 +286,13 @@ const AdminDashboard = () => {
                             {data.length === 0 ? (
                                 <tr><td colSpan="6" style={{padding: '30px', textAlign: 'center', color: '#888'}}>No records found.</td></tr>
                             ) : data.map(item => (
-                                <tr key={item._id} style={trStyle}>
+                                <React.Fragment key={item._id}>
+                                <tr style={trStyle}>
                                     
                                     {/* ORDERS ROW */}
                                     {activeTab === 'orders' && (
                                         <>
-                                            <td style={tdStyle}>#{item._id.substring(0, 8)}</td>
+                                            <td style={tdStyle}>#{String(item._id).substring(0, 8)}</td>
                                             <td style={tdStyle}><strong>{item.bookTitle}</strong></td>
                                             <td style={tdStyle}>
                                                 <div style={{fontSize: '0.85em'}}>B: {item.buyer?.full_name}</div>
@@ -313,9 +332,14 @@ const AdminDashboard = () => {
                                             <td style={tdStyle}>{(item.message || '').substring(0, 50)}...</td>
                                             <td style={tdStyle}>{new Date(item.createdAt).toLocaleDateString()}</td>
                                             <td style={tdStyle}>
+                                                <span style={getStatusBadge(item.status === 'Replied' ? 'Completed' : 'Pending')}>{item.status || 'Pending'}</span>
+                                            </td>
+                                            <td style={tdStyle}>
                                                 <button onClick={() => deleteItem(item._id)} style={deleteBtnStyle} title="Delete"><FaTrash /></button>
                                                 &nbsp;
-                                                <a href={`mailto:${item.email}`} style={replyBtnStyle} title="Reply"><FaReply /></a>
+                                                {item.status !== 'Replied' && (
+                                                    <button onClick={() => { setReplyingTo(item._id); setReplyText(''); }} style={{...replyBtnStyle, border: 'none'}} title="Reply"><FaReply /></button>
+                                                )}
                                             </td>
                                         </>
                                     )}
@@ -359,6 +383,26 @@ const AdminDashboard = () => {
                                         </>
                                     )}
                                 </tr>
+                                {activeTab === 'messages' && replyingTo === item._id && (
+                                    <tr style={{backgroundColor: '#eaf4fc'}}>
+                                        <td colSpan="6" style={{padding: '15px 24px'}}>
+                                            <div style={{display: 'flex', gap: '10px'}}>
+                                                <textarea
+                                                    style={{flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical'}}
+                                                    rows="2"
+                                                    placeholder="Type your reply to the user here..."
+                                                    value={replyText}
+                                                    onChange={e => setReplyText(e.target.value)}
+                                                ></textarea>
+                                                <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                                                    <button onClick={() => handleReplySubmit(item._id)} className="btn btn-primary" style={{padding: '5px 15px'}}>Send Reply</button>
+                                                    <button onClick={() => setReplyingTo(null)} className="btn btn-secondary" style={{padding: '5px 15px'}}>Cancel</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>
